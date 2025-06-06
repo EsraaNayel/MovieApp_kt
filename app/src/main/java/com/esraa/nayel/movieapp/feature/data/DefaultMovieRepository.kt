@@ -10,6 +10,7 @@ import com.esraa.nayel.movieapp.feature.data.cache.MovieCacheDataSource
 import com.esraa.nayel.movieapp.feature.data.models.toMovie
 import com.esraa.nayel.movieapp.feature.data.remote.MovieRemoteDataSource
 import com.esraa.nayel.movieapp.feature.data.remote.NetworkErrorHandler
+import com.esraa.nayel.movieapp.feature.data.remote.SearchMoviesPagingSource
 import com.esraa.nayel.movieapp.feature.domain.models.Movie
 import com.esraa.nayel.movieapp.feature.domain.repository.MovieRepository
 import kotlinx.coroutines.flow.Flow
@@ -32,6 +33,24 @@ class DefaultMovieRepository(
                 networkErrorHandler
             ),
             pagingSourceFactory = { cacheDataSource.getNowPlayingMovies() }
+        ).flow.map { pagingData ->
+            pagingData.map {
+                it.toMovie()
+            }
+        }
+    }
+
+    @OptIn(ExperimentalPagingApi::class)
+    override fun searchMovies(query: String): Flow<PagingData<Movie>> {
+        return Pager(
+            config = PagingConfig(pageSize = 20),
+            remoteMediator = DefaultMovieMediator(
+                db,
+                cacheDataSource,
+                remoteDataSource,
+                networkErrorHandler
+            ),
+            pagingSourceFactory = { SearchMoviesPagingSource(remoteDataSource, query) }
         ).flow.map { pagingData ->
             pagingData.map {
                 it.toMovie()

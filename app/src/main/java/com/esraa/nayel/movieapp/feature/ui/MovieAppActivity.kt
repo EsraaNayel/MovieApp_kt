@@ -33,7 +33,6 @@ class MovieAppActivity : ComponentActivity() {
             MoviesTheme {
                 val navController = rememberNavController()
                 val backStackEntry by navController.currentBackStackEntryAsState()
-
                 val onMovieClick: (Int) -> Unit = { movieId ->
                     navController.navigate("${AppRoute.Movie.route}/$movieId")
                 }

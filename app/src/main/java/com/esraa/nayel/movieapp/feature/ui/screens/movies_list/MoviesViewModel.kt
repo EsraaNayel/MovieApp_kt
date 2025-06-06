@@ -11,14 +11,18 @@ import androidx.paging.map
 import com.esraa.nayel.movieapp.feature.data.DefaultMovieRepository
 import com.esraa.nayel.movieapp.feature.data.remote.DefaultNetworkErrorHandler
 import com.esraa.nayel.movieapp.feature.domain.GetNowPlayingMoviesUseCase
+import com.esraa.nayel.movieapp.feature.domain.SearchMoviesUseCase
 import com.esraa.nayel.movieapp.feature.framework.database.MoviesDatabase
 import com.esraa.nayel.movieapp.feature.framework.network.MoviesNetwork
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
 
 class MoviesViewModel(
     private val getNowPlayingMoviesUseCase: GetNowPlayingMoviesUseCase,
+    private val searchMoviesUseCase: SearchMoviesUseCase,
 ) : ViewModel() {
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
@@ -36,7 +40,8 @@ class MoviesViewModel(
                 val repo = DefaultMovieRepository(db, cache, remote, networkErrorHandler)
 
                 MoviesViewModel(
-                    GetNowPlayingMoviesUseCase(repo)
+                    GetNowPlayingMoviesUseCase(repo),
+                    SearchMoviesUseCase(repo)
                 )
             }
         }
@@ -44,6 +49,10 @@ class MoviesViewModel(
 
     private val _uiState = MutableStateFlow(MoviesUIState())
     val uiState = _uiState.asStateFlow()
+
+
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
     init {
         getNowPlayingMovies()
@@ -55,5 +64,24 @@ class MoviesViewModel(
                 pagingData.map { it.toMoviesUIModel() }
             }.cachedIn(viewModelScope)
         )
+    }
+
+    fun searchMovie(searchText: String) {
+        _uiState.value = _uiState.value.copy(
+            searchMovies = searchMoviesUseCase(searchText).map { pagingData ->
+                pagingData.map { it.toMoviesUIModel() }
+            }.cachedIn(viewModelScope)
+        )
+    }
+
+    fun onSearchQueryChanged(query: String) {
+        _searchQuery.value = query
+
+        if (query.isNotBlank()) {
+            searchMovie(query)
+        } else {
+            // Optional: Clear search results or just show now playing
+            _uiState.value = _uiState.value.copy(searchMovies = emptyFlow())
+        }
     }
 }

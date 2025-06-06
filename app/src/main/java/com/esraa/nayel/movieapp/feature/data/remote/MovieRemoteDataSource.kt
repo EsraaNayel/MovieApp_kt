@@ -20,4 +20,12 @@ interface MovieRemoteDataSource {
         @Path("movie_id") id: Int,
         @Query("language") language: String = "en"
     ): MovieData
+
+    @GET("search/movie")
+    suspend fun searchMovies(
+        @Query("query") query: String,
+        @Query("page") page: Int = 1,
+        @Query("language") language: String = "en",
+    ): MoviesResponse
+
 }

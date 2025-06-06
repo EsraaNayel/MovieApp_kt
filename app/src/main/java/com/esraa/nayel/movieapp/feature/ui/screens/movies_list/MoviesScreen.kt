@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,6 +32,7 @@ import coil3.request.crossfade
 import com.esraa.nayel.movieapp.feature.domain.repository.MovieError
 import com.esraa.nayel.movieapp.feature.ui.components.AppErrorView
 import com.esraa.nayel.movieapp.feature.ui.components.AppLoadingView
+import com.esraa.nayel.movieapp.feature.ui.components.AppSearchBarView
 import com.esraa.nayel.movieapp.feature.ui.components.toAppError
 
 @Composable
@@ -40,96 +42,111 @@ fun MoviesScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val movies = uiState.nowPlayingMovies.collectAsLazyPagingItems()
-    
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-    ) {
-        items(movies.itemCount) {
-            val movie = movies[it]
-            if (movie != null) {
-                Card(
-                    modifier = Modifier
-                        .height(250.dp)
-                        .padding(8.dp)
-                        .clickable { onMovieClick(movie.id) },
-                ) {
-                    Box {
-                        AsyncImage(
-                            model = ImageRequest.Builder(LocalContext.current)
-                                .data(movie.posterPath).crossfade(true)
-                                .build(),
-                            contentDescription = movie.title,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .align(Alignment.TopStart)
-                                .fillMaxWidth()
-                                .height(250.dp),
-                        )
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.BottomStart)
-                                .fillMaxSize()
-                                .background(
-                                    Brush.verticalGradient(
-                                        colorStops = arrayOf(
-                                            Pair(0.3f, Color.Transparent), Pair(
-                                                1.5f, MaterialTheme.colorScheme.background
+    val searchResults = uiState.searchMovies.collectAsLazyPagingItems()
+    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
+
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        AppSearchBarView(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            searchQuery = searchQuery,
+            onSearchQueryChanged = { viewModel.onSearchQueryChanged(it) },
+            onSearchClicked = { viewModel.searchMovie(searchQuery) }
+
+
+        )
+
+
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
+            val itemsToShow = if (searchQuery.isNotBlank()) searchResults else movies
+
+            items(itemsToShow.itemCount) { index ->
+                val movie = itemsToShow[index]
+                if (movie != null) {
+                    Card(
+                        modifier = Modifier
+                            .height(250.dp)
+                            .padding(8.dp)
+                            .clickable { onMovieClick(movie.id) },
+                    ) {
+                        Box {
+                            AsyncImage(
+                                model = ImageRequest.Builder(LocalContext.current)
+                                    .data(movie.posterPath)
+                                    .crossfade(true)
+                                    .build(),
+                                contentDescription = movie.title,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .align(Alignment.TopStart)
+                                    .fillMaxWidth()
+                                    .height(250.dp),
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.BottomStart)
+                                    .fillMaxSize()
+                                    .background(
+                                        Brush.verticalGradient(
+                                            colorStops = arrayOf(
+                                                Pair(0.3f, Color.Transparent),
+                                                Pair(1.5f, MaterialTheme.colorScheme.background)
                                             )
                                         )
                                     )
-                                )
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .align(Alignment.BottomStart)
-                                    .fillMaxWidth()
-                                    .padding(12.dp)
                             ) {
-                                Text(
-                                    text = movie.title,
-                                    color = MaterialTheme.colorScheme.onBackground,
-                                )
-                                Text(
-                                    text = movie.releaseDate,
-                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                                )
+                                Column(
+                                    modifier = Modifier
+                                        .align(Alignment.BottomStart)
+                                        .fillMaxWidth()
+                                        .padding(12.dp)
+                                ) {
+                                    Text(
+                                        text = movie.title,
+                                        color = MaterialTheme.colorScheme.onBackground,
+                                    )
+                                    Text(
+                                        text = movie.releaseDate,
+                                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
-        }
 
-        movies.loadState.let { loadState ->
-            when {
-                loadState.refresh is LoadState.Loading -> {
-                    item {
-                        AppLoadingView()
+            // Load state
+            itemsToShow.loadState.let { loadState ->
+                when {
+                    loadState.refresh is LoadState.Loading -> {
+                        item { AppLoadingView() }
                     }
-                }
 
-                loadState.refresh is LoadState.Error -> {
-                    item {
-                        AppErrorView(
-                            ((loadState.refresh as LoadState.Error).error as MovieError).toAppError()
-                        )
+                    loadState.refresh is LoadState.Error -> {
+                        item {
+                            AppErrorView(
+                                ((loadState.refresh as LoadState.Error).error as MovieError).toAppError()
+                            )
+                        }
                     }
-                }
 
-                loadState.append is LoadState.Loading -> {
-                    item {
-                        AppLoadingView()
+                    loadState.append is LoadState.Loading -> {
+                        item { AppLoadingView() }
                     }
-                }
 
-                loadState.append is LoadState.Error -> {
-                    item {
-                        AppErrorView(
-                            ((loadState.append as LoadState.Error).error as MovieError).toAppError()
-                        )
+                    loadState.append is LoadState.Error -> {
+                        item {
+                            AppErrorView(
+                                ((loadState.append as LoadState.Error).error as MovieError).toAppError()
+                            )
+                        }
                     }
                 }
             }
         }
     }
+
 }

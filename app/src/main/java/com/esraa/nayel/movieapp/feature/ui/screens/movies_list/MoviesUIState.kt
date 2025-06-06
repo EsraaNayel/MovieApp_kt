@@ -6,6 +6,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 
 @Stable
-data class MoviesUIState(val nowPlayingMovies: Flow<PagingData<MoviesUIModel>> = emptyFlow()) {
+data class MoviesUIState(val nowPlayingMovies: Flow<PagingData<MoviesUIModel>> = emptyFlow(),
+    val searchMovies: Flow<PagingData<MoviesUIModel>> = emptyFlow())
+{
 
 }
