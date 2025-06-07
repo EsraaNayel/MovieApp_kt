@@ -11,6 +11,7 @@ import androidx.paging.cachedIn
 import androidx.paging.map
 import com.esraa.nayel.movieapp.feature.data.remote.DefaultNetworkErrorHandler
 import com.esraa.nayel.movieapp.feature.domain.GetNowPlayingMoviesUseCase
+import com.esraa.nayel.movieapp.feature.domain.GetSearchSuggestionsUseCase
 import com.esraa.nayel.movieapp.feature.domain.SearchMoviesUseCase
 import com.esraa.nayel.movieapp.feature.framework.database.MoviesDatabase
 import com.esraa.nayel.movieapp.feature.framework.network.MoviesNetwork
@@ -28,7 +29,7 @@ import kotlinx.coroutines.launch
 class MoviesViewModel(
     private val getNowPlayingMoviesUseCase: GetNowPlayingMoviesUseCase,
     private val searchMoviesUseCase: SearchMoviesUseCase,
-    private val repo: DefaultMovieRepository
+    private val getSearchSuggestionsUseCase: GetSearchSuggestionsUseCase
 
 ) : ViewModel() {
     companion object {
@@ -49,7 +50,7 @@ class MoviesViewModel(
                 MoviesViewModel(
                     GetNowPlayingMoviesUseCase(repo),
                     SearchMoviesUseCase(repo),
-                    repo
+                    GetSearchSuggestionsUseCase(repo)
                 )
             }
         }
@@ -124,7 +125,7 @@ class MoviesViewModel(
         suggestionJob = viewModelScope.launch {
             _isLoadingSuggestions.value = true
             try {
-                repo.getSearchSuggestions(query)
+                getSearchSuggestionsUseCase(query)
                     .onSuccess { suggestions ->
                         _searchSuggestions.value = suggestions
                     }
