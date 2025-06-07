@@ -85,7 +85,6 @@ dependencies {
     testImplementation(libs.testing.kotlin)
     testImplementation(libs.testing.kotlin.coroutines)
     testImplementation(libs.mocking.mockito.core)
-//    mockitoAgent(libs.mocking.mockito.core) { isTransitive = false }
     testImplementation(libs.mocking.mockito.kotlin)
     testImplementation(libs.asserting.truth)
     testImplementation(platform(libs.androidx.compose.bom))

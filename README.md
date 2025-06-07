@@ -12,6 +12,34 @@
 - **Database**: Room
 - **Build Tool**: Gradle with Kotlin DSL
 
+## ✨ Features
+- 🎬 Now Playing Movies
+Browse the latest movies currently playing in theaters.
+
+- 🔍 Search Movies
+Search for movies by title with real-time suggestions.
+
+- 📄 Movie Details
+View detailed information about a selected movie including overview, release date, and rating.
+
+- 💡 Search Suggestions
+Get movie title suggestions as you type based on local and remote data.
+
+- 🧠 Offline Caching
+Automatically caches movies for offline access using Room.
+
+- 🔄 Pagination
+Smooth infinite scrolling using Paging library.
+
+- 💥 Error Handling
+Graceful handling of network and data errors with proper UI feedback.
+
+- 🌗 Jetpack Compose UI
+Modern, declarative UI with theming and responsive design.
+
+- 🧪 Clean Architecture
+Scalable and testable architecture with separation of concerns.
+
 
 ## 📊 Arch Diagram
 **a high-level overview**
