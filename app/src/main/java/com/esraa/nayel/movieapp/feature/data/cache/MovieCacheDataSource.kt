@@ -18,6 +18,9 @@ interface MovieCacheDataSource {
     @Upsert
     suspend fun insertMovies(movies: List<MovieData>)
 
+    @Query("SELECT * FROM MovieData WHERE id = :id")
+    suspend fun getMovieById(id: Int): MovieData?
+
     @Query("DELETE FROM MovieData")
     suspend fun clearAll()
 

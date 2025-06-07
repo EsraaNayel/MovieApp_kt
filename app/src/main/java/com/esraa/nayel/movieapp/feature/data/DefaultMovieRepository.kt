@@ -53,7 +53,13 @@ class DefaultMovieRepository(
 
     override suspend fun getMovie(id: Int): Result<Movie> {
         return networkErrorHandler.handle {
-            remoteDataSource.getMovie(id).toMovie()
+            val cachedMovie = cacheDataSource.getMovieById(id)
+            if (cachedMovie != null) {
+                return@handle cachedMovie.toMovie()
+            }
+            val remoteMovie = remoteDataSource.getMovie(id)
+            cacheDataSource.insertMovies(listOf(remoteMovie))
+            remoteMovie.toMovie()
         }
     }
 
