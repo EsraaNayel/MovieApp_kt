@@ -1,5 +1,6 @@
 package com.esraa.nayel.movieapp.feature.ui.screens.movies_list
 
+import DefaultMovieRepository
 import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -8,21 +9,27 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.paging.cachedIn
 import androidx.paging.map
-import com.esraa.nayel.movieapp.feature.data.DefaultMovieRepository
 import com.esraa.nayel.movieapp.feature.data.remote.DefaultNetworkErrorHandler
 import com.esraa.nayel.movieapp.feature.domain.GetNowPlayingMoviesUseCase
 import com.esraa.nayel.movieapp.feature.domain.SearchMoviesUseCase
 import com.esraa.nayel.movieapp.feature.framework.database.MoviesDatabase
 import com.esraa.nayel.movieapp.feature.framework.network.MoviesNetwork
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 
 class MoviesViewModel(
     private val getNowPlayingMoviesUseCase: GetNowPlayingMoviesUseCase,
     private val searchMoviesUseCase: SearchMoviesUseCase,
+    private val repo: DefaultMovieRepository
+
 ) : ViewModel() {
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
@@ -41,11 +48,21 @@ class MoviesViewModel(
 
                 MoviesViewModel(
                     GetNowPlayingMoviesUseCase(repo),
-                    SearchMoviesUseCase(repo)
+                    SearchMoviesUseCase(repo),
+                    repo
                 )
             }
         }
     }
+
+    private val _searchSuggestions = MutableStateFlow<List<String>>(emptyList())
+    val searchSuggestions = _searchSuggestions.asStateFlow()
+
+    private val _isLoadingSuggestions = MutableStateFlow(false)
+    val isLoadingSuggestions = _isLoadingSuggestions.asStateFlow()
+
+    private var suggestionJob: Job? = null
+
 
     private val _uiState = MutableStateFlow(MoviesUIState())
     val uiState = _uiState.asStateFlow()
@@ -56,6 +73,7 @@ class MoviesViewModel(
 
     init {
         getNowPlayingMovies()
+        setupAutocomplete()
     }
 
     private fun getNowPlayingMovies() {
@@ -80,8 +98,50 @@ class MoviesViewModel(
         if (query.isNotBlank()) {
             searchMovie(query)
         } else {
-            // Optional: Clear search results or just show now playing
             _uiState.value = _uiState.value.copy(searchMovies = emptyFlow())
         }
     }
+
+
+    @OptIn(FlowPreview::class)
+    private fun setupAutocomplete() {
+        viewModelScope.launch {
+            searchQuery
+                .debounce(300)
+                .distinctUntilChanged()
+                .collect { query ->
+                    if (query.isNotBlank() && query.length >= 2) {
+                        loadSuggestions(query)
+                    } else {
+                        _searchSuggestions.value = emptyList()
+                    }
+                }
+        }
+    }
+
+    private fun loadSuggestions(query: String) {
+        suggestionJob?.cancel()
+        suggestionJob = viewModelScope.launch {
+            _isLoadingSuggestions.value = true
+            try {
+                repo.getSearchSuggestions(query)
+                    .onSuccess { suggestions ->
+                        _searchSuggestions.value = suggestions
+                    }
+                    .onFailure {
+                        _searchSuggestions.value = emptyList()
+                    }
+            } finally {
+                _isLoadingSuggestions.value = false
+            }
+        }
+    }
+
+    fun onSuggestionSelected(suggestion: String) {
+        _searchQuery.value = suggestion
+        searchMovie(suggestion)
+        _searchSuggestions.value = emptyList()
+    }
+
+
 }

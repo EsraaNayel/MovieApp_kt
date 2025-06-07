@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -32,7 +31,7 @@ import coil3.request.crossfade
 import com.esraa.nayel.movieapp.feature.domain.repository.MovieError
 import com.esraa.nayel.movieapp.feature.ui.components.AppErrorView
 import com.esraa.nayel.movieapp.feature.ui.components.AppLoadingView
-import com.esraa.nayel.movieapp.feature.ui.components.AppSearchBarView
+import com.esraa.nayel.movieapp.feature.ui.components.AppSearchBarWithAutocomplete
 import com.esraa.nayel.movieapp.feature.ui.components.toAppError
 
 @Composable
@@ -45,17 +44,20 @@ fun MoviesScreen(
     val searchResults = uiState.searchMovies.collectAsLazyPagingItems()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
 
+    val searchSuggestions by viewModel.searchSuggestions.collectAsStateWithLifecycle()
+    val isLoadingSuggestions by viewModel.isLoadingSuggestions.collectAsStateWithLifecycle()
 
     Column(modifier = Modifier.fillMaxSize()) {
-        AppSearchBarView(
+        AppSearchBarWithAutocomplete(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(12.dp),
             searchQuery = searchQuery,
+            suggestions = searchSuggestions,
+            isLoadingSuggestions = isLoadingSuggestions,
             onSearchQueryChanged = { viewModel.onSearchQueryChanged(it) },
-            onSearchClicked = { viewModel.searchMovie(searchQuery) }
-
-
+            onSearchClicked = { viewModel.searchMovie(searchQuery) },
+            onSuggestionSelected = { viewModel.onSuggestionSelected(it) }
         )
 
 
@@ -118,7 +120,7 @@ fun MoviesScreen(
                 }
             }
 
-            // Load state
+            // Load state handling remains the same
             itemsToShow.loadState.let { loadState ->
                 when {
                     loadState.refresh is LoadState.Loading -> {
@@ -148,5 +150,4 @@ fun MoviesScreen(
             }
         }
     }
-
 }

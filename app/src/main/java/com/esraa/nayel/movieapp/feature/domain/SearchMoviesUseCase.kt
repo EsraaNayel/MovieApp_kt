@@ -1,6 +1,6 @@
 package com.esraa.nayel.movieapp.feature.domain
 
-import com.esraa.nayel.movieapp.feature.data.DefaultMovieRepository
+import DefaultMovieRepository
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOn

@@ -12,6 +12,9 @@ interface MovieCacheDataSource {
     @Query("SELECT * FROM MovieData")
     fun getNowPlayingMovies(): PagingSource<Int, MovieData>
 
+    @Query("SELECT title FROM MovieData WHERE title LIKE '%' || :query || '%' LIMIT 10")
+    suspend fun getMovieTitles(query: String): List<String>
+
     @Upsert
     suspend fun insertMovies(movies: List<MovieData>)
 

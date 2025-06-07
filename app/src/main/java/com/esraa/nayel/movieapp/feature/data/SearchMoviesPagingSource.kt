@@ -1,8 +1,9 @@
-package com.esraa.nayel.movieapp.feature.data.remote
+package com.esraa.nayel.movieapp.feature.data
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.esraa.nayel.movieapp.feature.data.models.MovieData
+import com.esraa.nayel.movieapp.feature.data.remote.MovieRemoteDataSource
 
 class SearchMoviesPagingSource(private val api: MovieRemoteDataSource,
                                private val query: String
